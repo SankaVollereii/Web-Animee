@@ -17,11 +17,12 @@ export default defineConfig({
 
   output: "server",
   adapter: vercel(),
+/*
   adapter: cloudflare({
     platformProxy: {
       enabled: false,
     },
   }),
-
+*/
   integrations: [playformCompress()],
 });
