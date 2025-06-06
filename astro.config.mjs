@@ -8,8 +8,6 @@ import playformCompress from "@playform/compress";
 
 // https://astro.build/config
 export default defineConfig({
-output: 'server', // Penting untuk SSR
-  adapter: vercel(),
   vite: {
     plugins: [tailwindcss()],
     build: {
@@ -18,7 +16,7 @@ output: 'server', // Penting untuk SSR
   },
 
   output: "server",
-
+  adapter: vercel(),
   adapter: cloudflare({
     platformProxy: {
       enabled: false,
