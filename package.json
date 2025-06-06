@@ -12,6 +12,7 @@
   },
   "dependencies": {
     "@astrojs/cloudflare": "^12.2.3",
+    "@astrojs/vercel": "^8.1.4",
     "@playform/compress": "^0.1.7",
     "@tailwindcss/vite": "^4.0.9",
     "astro": "^5.4.1",
