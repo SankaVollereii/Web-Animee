@@ -1,6 +1,7 @@
 const API_BASE_URL = "https://api-kura.animez.my.id/api";
 const SCHEDULE_API_BASE_URL = "https://api.otakudesu.natee.my.id/api";
 
+
 /**
  * Fetch search results based on a query.
  * @param {string} query - The search query.
