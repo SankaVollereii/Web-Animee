@@ -1,0 +1,126 @@
+---
+import Layout from '~/layouts/Layout.astro';
+import { fetchScheduleData, fetchSearchData } from '~/utils/api.js'; // Pastikan fetchSearchData diimpor!
+
+let processedSchedule = []; // Ini akan berisi data jadwal yang sudah dilengkapi gambar, id, dan slug
+
+try {
+  const res = await fetchScheduleData(); // Ambil data jadwal dari API Otakudesu
+  const rawSchedule = res?.data || [];
+
+  // Proses setiap hari dalam jadwal secara paralel
+  const processDayPromises = rawSchedule.map(async (dailySchedule) => {
+    // Proses setiap anime dalam daftar hari itu secara paralel
+    const animeListWithDetailsPromises = dailySchedule.anime_list.map(async (anime) => {
+      let displayImage = 'https://via.placeholder.com/250x350?text=No+Image'; // Default placeholder
+      let watchPageId = ''; // Default empty
+      let watchPageSlug = ''; // Default empty
+
+      // Lakukan pencarian ke API Kura (API utama Anda) untuk mendapatkan gambar, id, dan slug yang cocok
+      // Gunakan nama anime dari jadwal sebagai query pencarian
+      const searchRes = await fetchSearchData(anime.anime_name);
+
+      // Coba temukan kecocokan terbaik (misalnya, judul yang sama persis)
+      // Jika tidak ada yang sama persis, ambil hasil pertama
+      const matchedAnime = searchRes?.results?.find(
+        (sr) => sr.title?.toLowerCase() === anime.anime_name.toLowerCase()
+      ) || searchRes?.results?.[0]; // Fallback ke hasil pertama
+
+      if (matchedAnime) {
+        displayImage = matchedAnime.image || displayImage; // Ambil gambar dari hasil pencarian, fallback ke placeholder
+        watchPageId = matchedAnime.id;
+        watchPageSlug = matchedAnime.slug;
+      } else {
+        // Jika tidak ada kecocokan di API Kura, fallback menggunakan slug dari URL Otakudesu jika memungkinkan
+        const parts = anime.url.split('/');
+        const otakudesuSlug = parts[parts.length - 2];
+        watchPageId = otakudesuSlug; // Bisa jadi ID Anda tidak sama dengan slug ini
+        watchPageSlug = otakudesuSlug;
+        // Peringatan: Link ini mungkin tidak berfungsi di halaman /watch Anda jika ID/slug tidak ada di API Kura
+      }
+
+      return {
+        ...anime, // Pertahankan data asli dari API jadwal (anime_name, url, slug Otakudesu)
+        displayImage: displayImage, // URL gambar untuk ditampilkan
+        watchPageId: watchPageId,   // ID yang benar untuk halaman /watch Anda
+        watchPageSlug: watchPageSlug, // Slug yang benar untuk halaman /watch Anda
+      };
+    });
+
+    // Tunggu semua promise anime dalam sehari selesai
+    const animeListWithDetails = await Promise.all(animeListWithDetailsPromises);
+
+    return {
+      day: dailySchedule.day,
+      anime_list: animeListWithDetails,
+    };
+  });
+
+  // Tunggu semua promise hari selesai
+  processedSchedule = await Promise.all(processDayPromises);
+
+} catch (error) {
+  console.error("Failed to fetch and process anime schedule:", error);
+  processedSchedule = [];
+}
+
+// Urutkan hari (opsional, sesuaikan urutan hari di Indonesia)
+const daysOrder = ["Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu", "Minggu", "Random"];
+
+// Mengelompokkan dan mengurutkan berdasarkan hari (struktur sudah dikelompokkan)
+const groupedSchedule = processedSchedule.reduce((acc, dailySchedule) => {
+  acc[dailySchedule.day] = dailySchedule.anime_list;
+  return acc;
+}, {});
+
+const sortedDays = Object.keys(groupedSchedule).sort((a, b) => {
+  return daysOrder.indexOf(a) - daysOrder.indexOf(b);
+});
+---
+
+<Layout title="Jadwal Anime" description="Jadwal rilis anime terbaru">
+  <div class="container mx-auto px-4 py-8">
+    <h1 class="text-3xl font-bold mb-8 text-center">Jadwal Anime</h1>
+
+    {Object.keys(groupedSchedule).length > 0 ? (
+      sortedDays.map(day => (
+        <div class="mb-8">
+          <h2 class="text-2xl font-bold mb-4 text-primary">{day}</h2>
+          <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 sm:gap-6">
+            {groupedSchedule[day].map(anime => (
+              <div class="card bg-base-200 shadow-xl group overflow-hidden relative">
+                <figure class="relative w-full pb-[100%] sm:pb-[120%] md:pb-[140%] overflow-hidden">
+                  <img
+                    src={anime.displayImage} {/* Menggunakan gambar yang sudah diproses */}
+                    alt={anime.anime_name || 'Anime Image'}
+                    class="absolute inset-0 w-full h-full object-cover transform transition-transform duration-300 group-hover:scale-105"
+                  />
+                </figure>
+
+                <div class="absolute inset-0 bg-gradient-to-t from-black/90 via-black/60 to-transparent flex flex-col justify-end p-4 text-white">
+                  <h3 class="font-bold text-lg md:text-xl leading-tight mb-1">
+                    {anime.anime_name} {/* Menggunakan anime_name dari API jadwal */}
+                  </h3>
+                  {/* API jadwal ini tidak menyediakan rating atau status */}
+                  {/* Anda bisa menambahkan informasi lain jika API menyediakannya, misalnya waktu rilis spesifik */}
+                  <div class="card-actions justify-end mt-4">
+                    {/* Menggunakan id dan slug yang sudah dicari dari API Kura */}
+                    {anime.watchPageId && anime.watchPageSlug ? (
+                      <a href={`/watch/${anime.watchPageId}/${anime.watchPageSlug}`} class="btn btn-primary btn-sm">Lihat Detail</a>
+                    ) : (
+                      <button class="btn btn-primary btn-sm btn-disabled">Detail Tidak Tersedia</button>
+                    )}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      ))
+    ) : (
+      <p class="text-center text-lg mt-8 text-warning">
+        Tidak ada jadwal anime yang tersedia saat ini.
+      </p>
+    )}
+  </div>
+</Layout>
