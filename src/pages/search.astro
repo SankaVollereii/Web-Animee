@@ -1,0 +1,73 @@
+---
+import Layout from '../layouts/Layout.astro';
+import { fetchSearchData } from './src/utils/api.js'; // Import fungsi fetchSearchData
+
+// Mengambil query pencarian dari URL
+const searchQuery = Astro.url.searchParams.get('q');
+
+let searchResults = [];
+
+// Jika ada query pencarian, lakukan fetching data
+if (searchQuery) {
+  try {
+    const data = await fetchSearchData(searchQuery);
+    // Kita tahu API mengembalikan objek dengan properti 'results'
+    searchResults = data?.results || []; // Mengambil array 'results'
+  } catch (error) {
+    console.error("Failed to fetch search results:", error);
+    searchResults = []; // Pastikan array kosong jika ada error
+  }
+}
+---
+
+<Layout title={`Hasil Pencarian: ${searchQuery || ''}`} description={`Menampilkan hasil pencarian untuk ${searchQuery || ''}`}>
+  <div class="container mx-auto px-4 py-8">
+    <h1 class="text-3xl font-bold mb-6">Hasil Pencarian untuk: "{searchQuery || 'Tidak ada query'}"</h1>
+
+    {searchQuery ? (
+      searchResults.length > 0 ? (
+        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+          {searchResults.map((anime) => (
+            <div class="card bg-base-200 shadow-xl image-full group"> {/* Tambah group untuk hover */}
+              <figure class="relative overflow-hidden rounded-xl">
+                {/* Pastikan menggunakan properti 'image' dari respons API Anda */}
+                <img
+                  src={anime.image || 'https://via.placeholder.com/250x350?text=No+Image'}
+                  alt={anime.title || 'Anime Image'}
+                  class="w-full h-full object-cover transform transition-transform duration-300 group-hover:scale-105"
+                />
+                <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent"></div> {/* Overlay gradasi */}
+              </figure>
+              <div class="card-body justify-end p-4 relative z-10"> {/* z-10 agar di atas gambar */}
+                <h2 class="card-title text-white text-xl leading-tight mb-1">{anime.title}</h2>
+                {/* Tambahkan detail lain jika ada, misal rating atau status */}
+                {anime.rating && <p class="text-white text-sm opacity-90">Rating: {anime.rating}</p>}
+                {anime.status && <p class="text-white text-sm opacity-90">Status: {anime.status}</p>}
+
+                <div class="card-actions justify-end mt-4">
+                  {/* Sesuaikan link ke halaman detail/watch anime kamu.
+                      Berdasarkan respons API, kita punya 'id' dan 'slug'.
+                      Contoh: /watch/2197/kusuriya-no-hitorigoto-2OgFC4Q
+                  */}
+                  <a href={`/watch/${anime.id}/${anime.slug}`} class="btn btn-primary btn-sm">Lihat</a>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <p class="text-center text-lg mt-8 text-warning">
+          Tidak ada hasil ditemukan untuk "{searchQuery}". Coba kata kunci lain.
+        </p>
+      )
+    ) : (
+      <p class="text-center text-lg mt-8">
+        Masukkan kata kunci di kolom pencarian untuk mencari anime.
+      </p>
+    )}
+
+    <div class="mt-10 text-center">
+      <a href="/" class="btn btn-link">Kembali ke Halaman Utama</a>
+    </div>
+  </div>
+</Layout>
