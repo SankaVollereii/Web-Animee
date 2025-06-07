@@ -149,9 +149,13 @@ function destroyPlayer() {
       playerInstance.pause();
     } else {
       const videoEl = document.querySelector("#player video");
-      if (videoEl) videoEl.pause();
+      if (videoEl) videoEl.pause(); // Pastikan videoEl ada
     }
-    playerInstance.destroy();
+    try {
+      playerInstance.destroy();
+    } catch (e) {
+      console.warn("Error destroying player instance:", e);
+    }
     playerInstance = null;
   }
   const existingPlayer = document.querySelector("media-player");
@@ -253,16 +257,17 @@ async function updateEpisode(
   playerContainer,
 ) {
   destroyPlayer();
+  // Update the URL to include the new episode parameter.
+  const url = new URL(window.location);
+  url.searchParams.set("episode", newEpisode);
+  window.location.assign(url.toString()); // <-- UBAH DI SINI!
   playerInfo.classList.remove("hidden");
   playerContainer.classList.add("hidden");
   playerInfo.innerHTML = "Loading episode " + newEpisode + "...";
   episodeInput.value = newEpisode;
   currentEpButton.textContent = `Episode ${newEpisode}`;
 
-  // Update the URL to include the new episode parameter.
-  const url = new URL(window.location);
-  url.searchParams.set("episode", newEpisode);
-  window.location.assign(url.toString()); // <-- UBAH DI SINI!
+
 
   pageActive = true;
   await updatePlayer(
@@ -298,6 +303,7 @@ export function initWatchPlayer() {
  *
  * @private
  */
+// watch.js
 function _initWatchPlayer() {
   const prevButton = document.getElementById("prevEpisode");
   const nextButton = document.getElementById("nextEpisode");
@@ -306,9 +312,20 @@ function _initWatchPlayer() {
   const playerInfo = document.getElementById("playerInfo");
   const playerContainer = document.getElementById("player");
 
+  // Tambahkan pengecekan null untuk elemen-elemen ini
+  if (!prevButton || !nextButton || !currentEpButton || !episodeInput || !playerInfo || !playerContainer) {
+    console.error("One or more required DOM elements not found for player initialization.");
+    return; // Hentikan eksekusi jika elemen tidak ada
+  }
+  // Sisa kode _initWatchPlayer...
   fetchWatchApi(episodeInput).then((data) => {
     if (!pageActive || document.visibilityState === "hidden") return;
     currentEpButton.textContent = "Episode " + getEpisode(episodeInput);
+    // Pastikan playerContainer sudah tersedia sebelum mencoba membuat player
+    if (!playerContainer) {
+        console.error("Player container element not found.");
+        return;
+    }
     createPlayer(data, playerInfo, playerContainer).then((player) => {
       if (!pageActive || document.visibilityState === "hidden") return;
       playerInstance = player;
