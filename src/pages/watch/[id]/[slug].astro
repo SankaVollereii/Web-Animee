@@ -15,30 +15,26 @@ if (!id || !slug) {
 // Ambil data anime
 const res = await fetchAnimeData(id, slug);
 if (!res) {
-    return new Response(null, { status: 404, statusText: "Anime not found" });
+    return new Response(null, { status: 404, statusText: "Anime not found" });
 }
 const data = res;
 
 let contentType = "Tidak Diketahui"; // Default
 const countryDetail = data.results.details?.find(d => {
-    // Debugging: Log setiap item detail saat dicari
-    // console.log(`Astro Server: Checking detail - type: ${d.type}, data: ${d.data}`); // Anda bisa mengaktifkan ini lagi
-    return d.type === "Negara:"; // <-- UBAH INI DARI d.title MENJADI d.type
+    return d.type === "Negara:";
 });
 
-if (countryDetail && countryDetail.data) { // <-- PENTING: Cek 'countryDetail.data'
-    const country = countryDetail.data.toLowerCase();
-    if (country.includes("jp") || country.includes("jepang")) {
-        contentType = "Anime";
-    } else if (country.includes("cn") || country.includes("china")) {
-        contentType = "Donghua";
-    } else if (country.includes("kr") || country.includes("korea")) {
-        contentType = "Manhwa (Animasi Korea)";
-    } else {
-        // Jika tidak masuk ke kategori spesifik manapun
-        contentType = "Animasi Lain";
-    }
-} else {
+if (countryDetail && countryDetail.data) {
+    const country = countryDetail.data.toLowerCase();
+    if (country.includes("jp") || country.includes("jepang")) {
+        contentType = "Anime";
+    } else if (country.includes("cn") || country.includes("china")) {
+        contentType = "Donghua";
+    } else if (country.includes("kr") || country.includes("korea")) {
+        contentType = "Manhwa (Animasi Korea)";
+    } else {
+        contentType = "Animasi Lain";
+    }
 }
 
 // Ekstrak data episode dengan aman. Pastikan properti 'episode' ada dan merupakan array.
@@ -53,26 +49,25 @@ const isFinished = data.results.details && data.results.details[2]?.data?.includ
 // Jika belum selesai atau tidak ada episode, gunakan episode terakhir.
 const currentEpisodeNumber = episode ? parseInt(episode) : (isFinished && episodes.length > 0 ? episodes[0] : totalEp);
 
-// Jika ada rating dan status, Anda bisa ekstrak di sini
-// const displayRating = data.results.rating || null;
-// const displayStatus = data.results.details?.find(d => d.title === "Status")?.data || null;
 ---
 
 <link rel="stylesheet" href="https://cdn.vidstack.io/player/theme.css" />
 <link rel="stylesheet" href="https://cdn.vidstack.io/player/video.css" />
 
 <Layout title={data.results.title} description={data.results.description || data.results.title}>
-  <div class="container mx-auto px-4 py-4 md:py-8">
+  {/* PERUBAHAN: container mx-auto px-0 default (tanpa padding horizontal di mobile kecil), lalu px-4 di sm ke atas */}
+  <div class="container mx-auto px-0 py-4 sm:px-4 md:py-8">
     <div class="flex flex-col gap-6">
 
       {/* BLOCK 1: Video Player & Navigasi Episode */}
-      <div class="bg-base-300 rounded-lg shadow-xl overflow-hidden p-2">
+      {/* PERUBAHAN: p-0 default (tanpa padding), py-2 (padding vertikal), lalu p-2 di sm, p-4 di md */}
+      <div class="bg-base-300 rounded-lg shadow-xl overflow-hidden px-0 py-2 sm:p-2 md:p-4">
         <p
           id="playerInfo"
-          class="aspect-video skeleton flex flex-col items-center justify-center text-center text-base-content/80 text-lg mb-2"
+          class="aspect-video skeleton flex flex-col items-center justify-center text-center text-base-content/80 text-sm md:text-lg mb-2"
         >
           Memuat video player...
-          <span class="loading loading-spinner loading-lg mt-4"></span>
+          <span class="loading loading-spinner loading-md md:loading-lg mt-2 md:mt-4"></span>
         </p>
         <div
           id="player"
@@ -82,46 +77,49 @@ const currentEpisodeNumber = episode ? parseInt(episode) : (isFinished && episod
           data-playsinline
           class="aspect-video hidden rounded-md"
         >
-          </div>
-        <div class="flex justify-between items-center mx-2 mt-4 p-2 bg-base-200 rounded-lg">
+        </div>
+        
+        {/* Input hidden episode berada di sini, dalam Layout dan sebelum skrip JS */}
+        <input id="episode" type="hidden" value={currentEpisodeNumber} />
+
+        {/* PERUBAHAN: mx-0 default, px-2 py-2 default. Lalu sm:mx-2 sm:px-2 sm:py-2, md:p-2 */}
+        <div class="flex justify-between items-center mx-0 mt-4 px-2 py-2 bg-base-200 rounded-lg sm:mx-2 sm:p-2">
           <button id="prevEpisode" class="btn btn-sm btn-outline btn-primary">Prev</button>
-          <button id="currentEp" class="btn btn-sm btn-ghost btn-disabled w-auto text-base-content"
-            >Episode {currentEpisodeNumber}</button
-          >
+          
+          {/* TEKS "Episode [Nomor]" DENGAN ID "currentEp" (KEMBALI) */}
+          <span id="currentEp" class="text-sm md:text-base text-base-content">Episode {currentEpisodeNumber}</span>
+
           <button id="nextEpisode" class="btn btn-sm btn-outline btn-primary">Next</button>
         </div>
-      </div>
 
-      {/* BLOCK 2: Daftar Episode */}
-      <div class="bg-base-300 rounded-lg shadow-xl p-4">
-        <h2 class="font-bold text-base md:text-xl mb-3 text-base-content">Daftar Episode</h2>
-        <div class="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-10 gap-2 overflow-auto max-h-64 scrollbar-thin scrollbar-thumb-primary scrollbar-track-base-200">
-          {episodes.length > 0 ? (
-            episodes.map(ep => (
-              <a
-                href={`/watch/${id}/${slug}?episode=${ep}`}
-                class={`btn btn-sm ${ep == currentEpisodeNumber ? 'btn-primary' : 'btn-outline'}`}
-              >
-                {ep}
-              </a>
-            ))
-          ) : (
-            <p class="text-center text-base-content/70">Tidak ada data episode.</p>
-          )}
+        {/* KOTAK DAFTAR EPISODE - SEBAGAI SELECT BOX */}
+        <div class="mt-4 md:mt-6 p-3 md:p-4 bg-base-200 rounded-lg">
+          <h3 class="text-lg md:text-xl font-bold mb-3 md:mb-4 text-base-content">Daftar Episode</h3>
+          <select id="episodeListSelect" class="select select-bordered select-sm md:select-md w-full bg-base-100 text-base-content">
+            {episodes.length > 0 ? (
+              episodes.map(ep => (
+                <option value={ep} selected={ep == currentEpisodeNumber}>
+                  Episode {ep}
+                </option>
+              ))
+            ) : (
+              <option value="" disabled>Tidak ada episode tersedia</option>
+            )}
+          </select>
         </div>
       </div>
 
       {/* BLOCK 3: Detail Anime & Sinopsis */}
-      <div class="p-4 rounded-lg shadow-xl bg-base-300 w-11/12 mx-auto sm:w-auto sm:mx-0">
-        <h1 class="text-xl sm:text-2xl md:text-3xl mb-6 text-primary">{data.results.title}</h1>
+      <div class="p-4 md:p-6 rounded-lg shadow-xl bg-base-300 w-full sm:w-auto sm:mx-0">
+        <h1 class="text-xl sm:text-2xl md:text-3xl mb-4 md:mb-6 text-primary">{data.results.title}</h1>
         
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 items-start mb-6">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 items-start mb-4 md:mb-6">
           {data.results.image && (
             <figure class="mb-4 md:mb-0 text-center w-full">
               <img
                 src={data.results.image}
                 alt={data.results.title}
-                class="rounded-lg shadow-lg mx-auto max-h-150 object-contain w-full" {/* Tambah w-full pada img */}
+                class="rounded-lg shadow-lg mx-auto max-h-48 sm:max-h-64 md:max-h-150 object-contain w-full"
               />
             </figure>
           )}
@@ -132,11 +130,11 @@ const currentEpisodeNumber = episode ? parseInt(episode) : (isFinished && episod
         </div>
 
         {/* SINPOSIS */}
-        <h2 class="font-bold text-lg md:text-xl mt-6 mb-2 text-base-content">Sinopsis:</h2>
-        <p set:html={data.results.description || "Sinopsis tidak tersedia."} class="text-base-content/90 leading-relaxed text-base" />
-        <p class="text-base-content/80 text-sm mt-1">
-        Kategori: <span class="font-semibold">{contentType}</span>
-        </p>
+        <h2 class="font-bold text-lg md:text-xl mt-4 md:mt-6 mb-2 text-base-content">Sinopsis:</h2>
+        <p set:html={data.results.description || "Sinopsis tidak tersedia."} class="text-sm md:text-base text-base-content/90 leading-relaxed" />
+        <p class="text-xs md:text-sm text-base-content/80 mt-1">
+        Kategori: <span class="font-semibold">{contentType}</span>
+        </p>
       </div>
     </div>
   </div>
@@ -145,16 +143,25 @@ const currentEpisodeNumber = episode ? parseInt(episode) : (isFinished && episod
 <script>
   import { initWatchPlayer } from "/src/scripts/watch.js";
 
-  const episodeInput = document.getElementById("episode");
-  const initialEpisode = episodeInput ? episodeInput.value : null;
-
   document.addEventListener("astro:after-swap", () => {
-    const updatedEpisodeInput = document.getElementById("episode");
-    const updatedInitialEpisode = updatedEpisodeInput ? updatedEpisodeInput.value : null;
-    initWatchPlayer(updatedInitialEpisode);
+    initWatchPlayer();
   });
   
-  initWatchPlayer(initialEpisode);
-</script>
+  initWatchPlayer();
 
-<input id="episode" type="hidden" value={currentEpisodeNumber} />
+  // --- JAVASCRIPT UNTUK MENANGANI SELECT BOX DAFTAR EPISODE ---
+  const episodeListSelect = document.getElementById("episodeListSelect");
+
+  if (episodeListSelect) {
+    episodeListSelect.addEventListener("change", (event) => {
+      const selectedEpisode = event.target.value;
+      if (selectedEpisode) {
+        // Arahkan pengguna ke URL episode yang dipilih
+        const currentUrl = new URL(window.location.href);
+        currentUrl.searchParams.set("episode", selectedEpisode);
+        window.location.assign(currentUrl.toString());
+      }
+    });
+  }
+  // --- AKHIR JAVASCRIPT UNTUK SELECT BOX DAFTAR EPISODE ---
+</script>
