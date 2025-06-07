@@ -1,4 +1,67 @@
 const API_BASE_URL = "https://api-kura.animez.my.id/api";
+const SCHEDULE_API_BASE_URL = "https://api.otakudesu.natee.my.id/api";
+
+/**
+ * Fetch search results based on a query.
+ * @param {string} query - The search query.
+ * @returns {Promise<object>} - Fetched JSON data (object containing a 'results' array).
+ */
+export async function fetchSearchData(query) {
+  try {
+    if (!query) {
+      console.warn("Search query is empty.");
+      return { results: [] };
+    }
+    const url = `${API_BASE_URL}/search?q=${encodeURIComponent(query)}`;
+    const response = await fetch(url);
+    if (!response.ok) {
+        throw new Error(`API search failed with status: ${response.status}`);
+    }
+    const data = await response.json();
+    return data; // API Anda mengembalikan { results: [...], pagination: [...] }
+  } catch (error) {
+    console.error("Error fetching search data:", error);
+    return { results: [] };
+  }
+}
+
+/**
+ * Fetch anime schedule data.
+ * @returns {Promise<object>} - Fetched JSON data (object containing a 'data' array).
+ */
+export async function fetchScheduleData() {
+  try {
+    const url = `${SCHEDULE_API_BASE_URL}/schedule`; // Menggunakan URL khusus jadwal
+    const response = await fetch(url);
+    if (!response.ok) {
+        throw new Error(`API schedule failed with status: ${response.status}`);
+    }
+    const data = await response.json();
+    return data; // API jadwal mengembalikan objek { data: [...] }
+  } catch (error) {
+    console.error("Error fetching schedule data:", error);
+    return { data: [] };
+  }
+}
+
+/**
+ * Fetch anime schedule data.
+ * @returns {Promise<object>} - Fetched JSON data (object containing a 'data' array).
+ */
+export async function fetchScheduleData() {
+  try {
+    const url = `${SCHEDULE_API_BASE_URL}/schedule`; // Menggunakan URL khusus jadwal
+    const response = await fetch(url);
+    if (!response.ok) {
+        throw new Error(`API schedule failed with status: ${response.status}`);
+    }
+    const data = await response.json();
+    return data; // API jadwal mengembalikan objek { data: [...] }
+  } catch (error) {
+    console.error("Error fetching schedule data:", error);
+    return { data: [] }; // Mengembalikan objek dengan array kosong jika ada error
+  }
+}
 
 /**
  * Fetch data from the given endpoint
@@ -16,32 +79,6 @@ export async function fetchData(endpoint, page = null) {
   } catch (error) {
     console.error("Error fetching data:", error);
     return null;
-  }
-}
-
-/**
- * Fetch search results based on a query.
- * @param {string} query - The search query.
- * @returns {Promise<object>} - Fetched JSON data (object containing a 'results' array).
- */
-export async function fetchSearchData(query) { // Hapus parameter 'page' jika API search Anda tidak menggunakannya
-  try {
-    if (!query) {
-      console.warn("Search query is empty.");
-      return { results: [] }; // Mengembalikan objek dengan array kosong jika query kosong
-    }
-    // URL sudah terbukti benar dari tes Anda
-    const url = `${API_BASE_URL}/search?q=${encodeURIComponent(query)}`;
-    const response = await fetch(url);
-
-    if (!response.ok) {
-        throw new Error(`API search failed with status: ${response.status}`);
-    }
-    const data = await response.json();
-    return data; // API Anda langsung mengembalikan objek { results: [...], pagination: [...] }
-  } catch (error) {
-    console.error("Error fetching search data:", error);
-    return { results: [] }; // Mengembalikan objek dengan array kosong jika ada error
   }
 }
 
