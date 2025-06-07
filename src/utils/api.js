@@ -1,7 +1,6 @@
 const API_BASE_URL = "https://api-kura.animez.my.id/api";
 const SCHEDULE_API_BASE_URL = "https://api.otakudesu.natee.my.id/api";
 
-
 /**
  * Fetch search results based on a query.
  * @param {string} query - The search query.
@@ -42,25 +41,6 @@ export async function fetchScheduleData() {
   } catch (error) {
     console.error("Error fetching schedule data:", error);
     return { data: [] };
-  }
-}
-
-/**
- * Fetch anime schedule data.
- * @returns {Promise<object>} - Fetched JSON data (object containing a 'data' array).
- */
-export async function fetchScheduleData() {
-  try {
-    const url = `${SCHEDULE_API_BASE_URL}/schedule`; // Menggunakan URL khusus jadwal
-    const response = await fetch(url);
-    if (!response.ok) {
-        throw new Error(`API schedule failed with status: ${response.status}`);
-    }
-    const data = await response.json();
-    return data; // API jadwal mengembalikan objek { data: [...] }
-  } catch (error) {
-    console.error("Error fetching schedule data:", error);
-    return { data: [] }; // Mengembalikan objek dengan array kosong jika ada error
   }
 }
 
