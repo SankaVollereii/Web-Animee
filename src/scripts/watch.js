@@ -115,7 +115,7 @@ async function createPlayer(data, playerInfo, playerContainer) {
     return player;
   } else {
     playerInfo.innerHTML =
-      "Video belum tersedia, mungkin sedang proses upload. Silahkan coba lagi nanti. Jika masalah berlanjut, silahkan hubungi mitsuaa.";
+      "Video belum tersedia, mungkin sedang proses upload. Silahkan coba lagi nanti. Jika masalah berlanjut, silahkan hubungi Sanka Vollerei.";
     return null;
   }
 }
