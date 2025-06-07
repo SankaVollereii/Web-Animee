@@ -262,7 +262,7 @@ async function updateEpisode(
   // Update the URL to include the new episode parameter.
   const url = new URL(window.location);
   url.searchParams.set("episode", newEpisode);
-  window.history.pushState({}, "", url);
+  window.location.assign(url.toString()); // <-- UBAH DI SINI!
 
   pageActive = true;
   await updatePlayer(
