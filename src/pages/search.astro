@@ -3,6 +3,7 @@ import Layout from '../layouts/Layout.astro';
 // import { fetchSearchData } from './src/utils/api.js'; 
 import { fetchSearchData } from '~/utils/api.js';
 
+// Mengambil query pencarian dari URL
 const searchQuery = Astro.url.searchParams.get('q');
 
 let searchResults = [];
@@ -19,36 +20,38 @@ if (searchQuery) {
   }
 }
 ---
-
 <Layout title={`Hasil Pencarian: ${searchQuery || ''}`} description={`Menampilkan hasil pencarian untuk ${searchQuery || ''}`}>
-  <div class="container mx-auto px-4 py-8">
-    <h1 class="text-3xl font-bold mb-6">Hasil Pencarian untuk: "{searchQuery || 'Tidak ada query'}"</h1>
+  <div class="container mx-auto px-4 py-4 md:py-8">
+    <h1 class="text-xl sm:text-2xl md:text-3xl font-bold mb-6">Hasil Pencarian untuk: "{searchQuery || 'Tidak ada query'}"</h1>
 
     {searchQuery ? (
       searchResults.length > 0 ? (
         <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
           {searchResults.map((anime) => (
-            <div class="card bg-base-200 shadow-xl image-full group"> {/* Tambah group untuk hover */}
-              <figure class="relative overflow-hidden rounded-xl">
-                {/* Pastikan menggunakan properti 'image' dari respons API Anda */}
+            <div class="
+              card bg-base-200 shadow-xl group overflow-hidden relative
+              w-11/12 mx-auto sm:w-auto sm:mx-0
+            ">
+              {/* FIGURE: Mengatur rasio aspek gambar */}
+              {/* Sekarang pb-[100%] untuk mobile (persegi), sm:pb-[120%] untuk sedikit lebih tinggi, dan md:pb-[140%] untuk desktop */}
+              <figure class="relative w-full pb-[100%] sm:pb-[120%] md:pb-[140%] overflow-hidden">
                 <img
                   src={anime.image || 'https://via.placeholder.com/250x350?text=No+Image'}
                   alt={anime.title || 'Anime Image'}
-                  class="w-full h-full object-cover transform transition-transform duration-300 group-hover:scale-105"
+                  class="absolute inset-0 w-full h-full object-cover transform transition-transform duration-300 group-hover:scale-105"
                 />
-                <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent"></div> {/* Overlay gradasi */}
               </figure>
-              <div class="card-body justify-end p-4 relative z-10"> {/* z-10 agar di atas gambar */}
-                <h2 class="card-title text-white text-xl leading-tight mb-1">{anime.title}</h2>
-                {/* Tambahkan detail lain jika ada, misal rating atau status */}
-                {anime.rating && <p class="text-white text-sm opacity-90">Rating: {anime.rating}</p>}
-                {anime.status && <p class="text-white text-sm opacity-90">Status: {anime.status}</p>}
 
+              {/* OVERLAY: Untuk teks agar lebih terbaca di atas gambar */}
+              <div class="absolute inset-0 bg-gradient-to-t from-black/90 via-black/60 to-transparent flex flex-col justify-end p-4 text-white">
+                {/* Judul Anime: text-lg di mobile, md:text-xl di desktop */}
+                <h2 class="font-bold text-lg md:text-xl leading-tight mb-1">
+                  {anime.title}
+                </h2>
+                {/* Rating & Status: text-xs di mobile, sm:text-sm di desktop */}
+                {anime.rating && <p class="text-xs sm:text-sm opacity-90">Rating: {anime.rating}</p>}
+                {anime.status && <p class="text-xs sm:text-sm opacity-90">Status: {anime.status}</p>}
                 <div class="card-actions justify-end mt-4">
-                  {/* Sesuaikan link ke halaman detail/watch anime kamu.
-                      Berdasarkan respons API, kita punya 'id' dan 'slug'.
-                      Contoh: /watch/2197/kusuriya-no-hitorigoto-2OgFC4Q
-                  */}
                   <a href={`/watch/${anime.id}/${anime.slug}`} class="btn btn-primary btn-sm">Lihat</a>
                 </div>
               </div>
