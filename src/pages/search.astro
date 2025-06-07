@@ -1,7 +1,7 @@
 ---
 import Layout from '../layouts/Layout.astro';
-import { fetchSearchData } from './src/utils/api.js'; 
-
+// import { fetchSearchData } from './src/utils/api.js'; 
+import { fetchSearchData } from '~/utils/api.js';
 
 const searchQuery = Astro.url.searchParams.get('q');
 
