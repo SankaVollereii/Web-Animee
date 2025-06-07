@@ -20,6 +20,32 @@ export async function fetchData(endpoint, page = null) {
 }
 
 /**
+ * Fetch search results based on a query.
+ * @param {string} query - The search query.
+ * @returns {Promise<object>} - Fetched JSON data (object containing a 'results' array).
+ */
+export async function fetchSearchData(query) { // Hapus parameter 'page' jika API search Anda tidak menggunakannya
+  try {
+    if (!query) {
+      console.warn("Search query is empty.");
+      return { results: [] }; // Mengembalikan objek dengan array kosong jika query kosong
+    }
+    // URL sudah terbukti benar dari tes Anda
+    const url = `${API_BASE_URL}/search?q=${encodeURIComponent(query)}`;
+    const response = await fetch(url);
+
+    if (!response.ok) {
+        throw new Error(`API search failed with status: ${response.status}`);
+    }
+    const data = await response.json();
+    return data; // API Anda langsung mengembalikan objek { results: [...], pagination: [...] }
+  } catch (error) {
+    console.error("Error fetching search data:", error);
+    return { results: [] }; // Mengembalikan objek dengan array kosong jika ada error
+  }
+}
+
+/**
  * Fetch anime data by ID and slug.
  * @param {string} id - Anime ID.
  * @param {string} slug - Anime slug.
