@@ -1,8 +1,8 @@
 ---
 import Layout from '../layouts/Layout.astro';
-import { fetchSearchData } from './src/utils/api.js'; // Import fungsi fetchSearchData
+import { fetchSearchData } from './src/utils/api.js'; 
 
-// Mengambil query pencarian dari URL
+
 const searchQuery = Astro.url.searchParams.get('q');
 
 let searchResults = [];
